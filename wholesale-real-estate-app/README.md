@@ -1,50 +1,100 @@
-# Welcome to your Expo app 👋
+# Supabase configuration and table setup
+-  wholesale-real-estate-app\assets\images\supabaseconf.jpg
+-  wholesale-real-estate-app\assets\images\Tabelsupabase.jpg
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# How React-Query is used
+-  Data Fetching:
+const { data: properties = [], isLoading, error } = useQuery({
+  queryKey: ['properties'],
+  queryFn: fetchProperties,
+});
+      -Fetches property data from Supabase-
+      -Manages loading and error states automatically-
 
-## Get started
+-  Query Caching:
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes cache
+    },
+  },
+});
+      -Caches data to avoid unnecessary network requests-
+      -Configures default stale time for all queries-
 
-1. Install dependencies
+-  Mutations (Data Updates):
+const mutation = useMutation({
+  mutationFn: addProperty,
+  onSuccess: () => {
+    queryClient.invalidateQueries(['properties']);
+  }
+});
+         -Handles form submissions to add new properties-
+         -Invalidates cache after successful mutation to trigger refetch-
 
-   ```bash
-   npm install
-   ```
+# How AsyncStorage is implemented
+-  AsyncStorage is first integrated as the storage layer for Supabase's authentication session:
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
 
-2. Start the app
+export const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      storage: AsyncStorage, // Uses AsyncStorage for session persistence
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    }
+  }
+);
+- AsyncStorage is used to cache property data:
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-   ```bash
-   npx expo start
-   ```
+const PROPERTIES_CACHE_KEY = 'properties_cache';
 
-In the output, you'll find options to open the app in a
+export const fetchProperties = async () => {
+  try {
+    // 1. Check cache first
+    const cachedData = await AsyncStorage.getItem(PROPERTIES_CACHE_KEY);
+    if (cachedData) {
+      return JSON.parse(cachedData); // Return cached data if available
+    }
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+    // 2. Fetch from Supabase if no cache
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    if (error) throw error;
 
-## Get a fresh project
+    // 3. Cache the fresh data
+    await AsyncStorage.setItem(
+      PROPERTIES_CACHE_KEY, 
+      JSON.stringify(data)
+    );
 
-When you're ready, run:
+    return data;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
 
-```bash
-npm run reset-project
-```
+export const addProperty = async (property) => {
+  const { data, error } = await supabase
+    .from('properties')
+    .insert([property])
+    .select();
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+  if (error) throw error;
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+  // 4. Invalidate cache on updates
+  await AsyncStorage.removeItem(PROPERTIES_CACHE_KEY);
+  
+  return data[0];
+};
+- Cache invalidation
+-  This work by read,wrtie, and update the code resulting in faster load, offline support and sync with supabase.

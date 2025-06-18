@@ -1,16 +1,30 @@
-import { Slot } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropertyProvider } from '../context/PropertyContext';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
+import { Stack } from 'expo-router';
+
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 export default function RootLayout() {
   return (
-    <PropertyProvider>
-      <View style={styles.container}>
-        <StatusBar style="auto" />
-        <Slot />
-      </View>
-    </PropertyProvider>
+    <QueryClientProvider client={queryClient}>
+      <PropertyProvider>
+        <View style={styles.container}>
+          <StatusBar style="auto" />
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </View>
+      </PropertyProvider>
+    </QueryClientProvider>
   );
 }
 

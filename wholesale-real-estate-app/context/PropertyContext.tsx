@@ -13,13 +13,14 @@ export interface Property {
 interface PropertyContextType {
   properties: Property[];
   savedProperties: string[];
+  addProperty: (property: Omit<Property, 'id'>) => void;
   toggleSaved: (id: string) => void;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
 
 export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [properties] = useState<Property[]>([
+  const [properties, setProperties] = useState<Property[]>([
     {
       id: '1',
       address: '123 Main St, Denver, CO',
@@ -250,6 +251,15 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [savedProperties, setSavedProperties] = useState<string[]>([]);
 
+  
+  const addProperty = (property: Omit<Property, 'id'>) => {
+    const newProperty = {
+      ...property,
+      id: Math.random().toString(36).substring(2, 9),
+    };
+    setProperties(prev => [newProperty, ...prev]);
+  };
+
   const toggleSaved = (id: string) => {
     setSavedProperties(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -257,7 +267,7 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   return (
-    <PropertyContext.Provider value={{ properties, savedProperties, toggleSaved }}>
+    <PropertyContext.Provider value={{ properties, savedProperties, addProperty, toggleSaved }}>
       {children}
     </PropertyContext.Provider>
   );

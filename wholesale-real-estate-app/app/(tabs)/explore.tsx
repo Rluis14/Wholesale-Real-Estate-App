@@ -27,8 +27,11 @@ const ExploreScreen = () => {
       </View>
 
       {/* Property List Section */}
-      <Text style={styles.sectionTitle}>Wholesale Investment Opportunities</Text>
-      
+      <View style={styles.headerRow}>
+        <Text style={styles.sectionTitle}>Investment Properties</Text>
+        <Text style={styles.countText}>{filteredProperties.length} found</Text>
+      </View>
+
       {filteredProperties.map(property => (
         <PropertyCard key={property.id} property={property} />
       ))}
@@ -37,6 +40,16 @@ const ExploreScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  countText: {
+    fontSize: 14,
+    color: '#7f8c8d',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',

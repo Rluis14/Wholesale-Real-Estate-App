@@ -98,3 +98,4 @@ export const addProperty = async (property) => {
 };
 - Cache invalidation
 -  This work by read,wrtie, and update the code resulting in faster load, offline support and sync with supabase.
+-  

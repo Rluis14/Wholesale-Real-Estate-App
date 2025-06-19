@@ -3,8 +3,7 @@ import { View, Text, TextInput, Button, ScrollView, StyleSheet, ActivityIndicato
 import { useQuery } from '@tanstack/react-query';
 import { fetchProperties } from '../../services/propertyService';
 import PropertyCard from '../../components/ui/PropertyCard';
-import { usePropertyContext } from '../../context/PropertyContext';
-import { usePropertySearch } from '../../hooks/usePropertySearch';
+import { Property } from '../../context/PropertyContext';
 
 const ExploreScreen = () => {
   const [searchText, setSearchText] = React.useState('');
@@ -19,15 +18,6 @@ const ExploreScreen = () => {
     queryKey: ['properties'],
     queryFn: fetchProperties,
   });
-
-  interface Property {
-    id: string;
-    address: string;
-    price: number;
-    arv: number;
-    profit: number;
-    [key: string]: any;
-  }
 
   const filteredProperties = (properties as Property[]).filter((property: Property) =>
     property.address.toLowerCase().includes(searchText.toLowerCase())
@@ -78,12 +68,7 @@ const ExploreScreen = () => {
       {filteredProperties.map(property => (
         <PropertyCard
           key={property.id}
-          property={{
-            ...property,
-            price: String(property.price),
-            arv: String(property.arv),
-            profit: String(property.profit),
-          }}
+          property={property}
         />
       ))}
     </ScrollView>

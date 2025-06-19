@@ -1,20 +1,53 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+import { fetchProperties } from '../../services/propertyService';
 import { usePropertyContext } from '../../context/PropertyContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const PropertyDetailScreen = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { properties, savedProperties, toggleSaved } = usePropertyContext();
+  const { savedProperties, toggleSaved } = usePropertyContext();
   
+  const {
+    data: properties = [],
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['properties'],
+    queryFn: fetchProperties,
+  });
+
   const property = properties.find(p => p.id === id);
   
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading property details...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load property details</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   if (!property) {
     return (
-      <View style={styles.container}>
-        <Text>Property not found</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Property not found</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -77,6 +110,29 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#2c3e50',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#e74c3c',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   backButton: {
     position: 'absolute',
     top: 16,
@@ -85,6 +141,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 20,
     padding: 8,
+  },
+  backButtonText: {
+    color: '#2c3e50',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -105,6 +166,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   detailRow: {
     flexDirection: 'row',
@@ -116,11 +182,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: '#7f8c8d',
+    flex: 1,
   },
   value: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2c3e50',
+    textAlign: 'right',
   },
   profit: {
     color: '#27ae60',
@@ -129,6 +197,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   descriptionTitle: {
     fontSize: 20,
